@@ -5,6 +5,37 @@
       <p>{{ t('orders.description') }}</p>
     </div>
 
+    <!-- Submitted restocking orders -->
+    <div v-if="restockingOrders.length > 0" class="card">
+      <div class="card-header">
+        <h3 class="card-title">Submitted Restocking Orders</h3>
+      </div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Order #</th>
+              <th>Items</th>
+              <th>Total Value</th>
+              <th>Submitted</th>
+              <th>Expected Delivery</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="order in restockingOrders" :key="order.id">
+              <td>{{ order.order_number }}</td>
+              <td>{{ order.items.length }} item(s)</td>
+              <td>{{ currencySymbol }}{{ order.total_value.toLocaleString() }}</td>
+              <td>{{ formatDate(order.order_date) }}</td>
+              <td>{{ formatDate(order.expected_delivery) }}</td>
+              <td><span class="badge info">Processing</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
     <div v-if="loading" class="loading">{{ t('common.loading') }}</div>
     <div v-else-if="error" class="error">{{ error }}</div>
     <div v-else>
@@ -105,6 +136,16 @@ export default {
       getCurrentFilters
     } = useFilters()
 
+    const restockingOrders = ref([])
+
+    const loadRestockingOrders = async () => {
+      try {
+        restockingOrders.value = await api.getRestockingOrders()
+      } catch (err) {
+        console.error('Failed to load restocking orders:', err)
+      }
+    }
+
     const loadOrders = async () => {
       try {
         loading.value = true
@@ -153,7 +194,10 @@ export default {
       })
     }
 
-    onMounted(loadOrders)
+    onMounted(() => {
+      loadOrders()
+      loadRestockingOrders()
+    })
 
     return {
       t,
@@ -165,7 +209,8 @@ export default {
       formatDate,
       currencySymbol,
       translateProductName,
-      translateCustomerName
+      translateCustomerName,
+      restockingOrders
     }
   }
 }
